@@ -36,9 +36,15 @@ class Request extends Message implements RequestInterface
     public $body = '';
     public function __construct($protocolVersion, $httpMethod, $uri, $headers, $body)
     {
+        $tmp = $this;
+
+
+        $tmp = $tmp->withMethod($httpMethod); #Using the setter methods to ensure values passed are valid.
+        $tmp = $tmp->withUri($uri);
+
         $this->protocolVersion = $protocolVersion;
-        $this->httpMethod = $httpMethod;
-        $this->uri = $uri;
+        $this->httpMethod=$tmp->httpMethod;
+        $this->uri = $tmp->uri;
         $this->headers = $headers;
         $this->body = $body;
     }
@@ -84,9 +90,9 @@ class Request extends Message implements RequestInterface
      */
     public function withRequestTarget($requestTarget)
     {
-        $httpRequest = $this;
-        $httpRequest->uri = new Uri($requestTarget);
-        return $httpRequest;
+        $output = $this;
+        $output->uri = new Uri($requestTarget);
+        return $output;
     }
 
     /**
@@ -116,7 +122,17 @@ class Request extends Message implements RequestInterface
      */
     public function withMethod($method)
     {
+      $output = $this;
 
+      if(in_array(strtoupper($method),array("GET","HEAD","POST","PUT","DELETE","TRACE","OPTIONS","CONNECT","PATCH")))
+      {
+        $output->httpMethod = $method;
+        return $output;
+      }
+
+      else {
+        throw new \InvalidArgumentException('Not a valid HTTP method');
+      }
     }
 
     /**
@@ -165,7 +181,26 @@ class Request extends Message implements RequestInterface
      */
     public function withUri(UriInterface $uri, $preserveHost = false)
     {
+        $output=$this;
+        if(!$preserveHost)
+        {
+            if($uri->getHost()=='')
+            {
+                $uri=$uri->withHost($this->uri->getHost());
+            }
+            $output->uri = $uri;
+        }
 
+        else
+        {
+            if($this->uri->getHost()!=='')
+            {
+                $uri=$uri->withHost($this->uri->getHost());
+            }
+            $output->uri = $uri;
+        }
+
+        return $output;
     }
 
 
