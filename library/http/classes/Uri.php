@@ -24,7 +24,71 @@ use \Psr\Http\Message\UriInterface as UriInterface;
  */
 class Uri implements UriInterface
 {
-    
+
+    public $scheme = '';
+    public $authority = '';
+    public $userInfo='';
+    public $host='';
+    public $port=NULL;
+    public $path='';
+    public $query='';
+    public $fragment='';
+
+    public function __construct($uriStr)
+    {
+        $uri = parse_url(trim($uriStr));
+        $this->scheme = strtolower(strval($uri['scheme'])); #if scheme is NULL, strval(NULL) is an empty string
+        $this->userInfo =  strval($uri['user']);
+        $this->port =  $uri['port'];
+        $this->path =  strval($uri['path']);
+        $this->query =  strval($uri['query']);
+        $this->fragment = strval($uri['fragment']);
+
+        #Sets port according to constraints
+        if ($uri['port'] == getservbyname($this->scheme, 'tcp')) #If port is the default port
+        {
+          $this->port = NULL;
+        }
+        else
+        {
+          $this->port = $uri['port'];
+        }
+
+        #Get around parse_url host bug when no scheme is present
+        $uriStrTmp = $uriStr;
+        #Adds a dummy scheme to dummy variable $uriStrTmp to retrieve the host correctly
+        if(strpos($uriStrTmp,"://")===false && substr($uriStrTmp,0,1)!="/") $uriStrTmp = "http://".$uriStrTmp; #From http://stackoverflow.com/questions/10359347/php-parse-url-domain-retured-as-path-when-protocol-prefix-not-present
+        $uriTmp = parse_url(trim($uriStrTmp));
+
+
+        $this->host = $uriTmp['host'];
+
+
+        #Construction of authority
+        if ($this->userInfo !== '')
+        {
+            $authorityUserInfo = $this->userInfo."@";
+        }
+        else
+        {
+            $authorityUserInfo = "";
+        }
+
+        if (is_null($this->port)) #If port is not present
+        {
+            $authorityPort = "";
+        }
+        else
+        {
+            $authorityPort = ":".strval($this->port);
+        }
+
+        $this->authority = $authorityUserInfo.$this->host.$authorityPort;
+
+    }
+
+
+
     /**
      * Retrieve the scheme component of the URI.
      *
@@ -41,7 +105,7 @@ class Uri implements UriInterface
      */
     public function getScheme()
     {
-
+        return $this->scheme;
     }
 
     /**
@@ -64,7 +128,7 @@ class Uri implements UriInterface
      */
     public function getAuthority()
     {
-
+        return $this->authority;
     }
 
     /**
@@ -84,7 +148,7 @@ class Uri implements UriInterface
      */
     public function getUserInfo()
     {
-
+        return $this->userInfo;
     }
 
     /**
@@ -100,7 +164,7 @@ class Uri implements UriInterface
      */
     public function getHost()
     {
-
+        return $this->host;
     }
 
     /**
@@ -120,7 +184,7 @@ class Uri implements UriInterface
      */
     public function getPort()
     {
-
+        return $this->port;
     }
 
     /**
@@ -150,7 +214,7 @@ class Uri implements UriInterface
      */
     public function getPath()
     {
-
+        return $this->path;
     }
 
     /**
@@ -175,7 +239,7 @@ class Uri implements UriInterface
      */
     public function getQuery()
     {
-
+        return $this->query;
     }
 
     /**
@@ -196,7 +260,7 @@ class Uri implements UriInterface
      */
     public function getFragment()
     {
-
+        return $this->fragment;
     }
 
     /**
@@ -369,7 +433,7 @@ class Uri implements UriInterface
      */
     public function __toString()
     {
-        
+
     }
 
 }

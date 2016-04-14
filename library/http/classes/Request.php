@@ -29,6 +29,16 @@ use \pillr\library\http\Message         as  Message;
 class Request extends Message implements RequestInterface
 {
 
+    public $protocolVersion = '1.1';
+    public $httpMethod = 'GET';
+    public $uri = NULL;
+    public $headers = array()
+    public $body = ''
+    public function __construct($protocolVersion, $httpMethod, $uri, $headers, $body)
+    {
+
+    }
+
 
     /**
      * Retrieves the message's request target.

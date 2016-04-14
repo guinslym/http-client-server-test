@@ -18,6 +18,7 @@ use Psr\Http\Message\StreamInterface as StreamInterface;
  */
 class Message implements MessageInterface
 {
+    
     /**
      * Retrieves the HTTP protocol version as a string.
      *
