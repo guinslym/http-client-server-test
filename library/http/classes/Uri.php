@@ -24,7 +24,7 @@ use \Psr\Http\Message\UriInterface as UriInterface;
  */
 class Uri implements UriInterface
 {
-
+    public $uriString = '';
     public $scheme = '';
     public $authority = '';
     public $userInfo='';
@@ -36,33 +36,26 @@ class Uri implements UriInterface
 
     public function __construct($uriStr)
     {
-        $uri = parse_url(trim($uriStr));
-        $this->scheme = strtolower(strval($uri['scheme'])); #if scheme is NULL, strval(NULL) is an empty string
-        $this->userInfo =  strval($uri['user']);
-        $this->port =  $uri['port'];
-        $this->path =  strval($uri['path']);
-        $this->query =  strval($uri['query']);
-        $this->fragment = strval($uri['fragment']);
+        $this->uriString = $uriStr;
+        $this->scheme = strtolower(strval(parse_url($uriStr,PHP_URL_SCHEME))); #if scheme is NULL, strval(NULL) is an empty string
+        $this->userInfo =  strval(parse_url($uriStr,PHP_URL_USER));
+        $this->host = strval(parse_url($uriStr,PHP_URL_HOST));
+        $this->port =  parse_url($uriStr,PHP_URL_PORT);
+
+        $this->query =  strval(parse_url($uriStr,PHP_URL_QUERY));
+        $this->fragment = strval(parse_url($uriStr,PHP_URL_FRAGMENT));
 
         #Sets port according to constraints
-        if ($uri['port'] == getservbyname($this->scheme, 'tcp')) #If port is the default port
+        if ($this->port == getservbyname($this->scheme, 'tcp')) #If port is the default port
         {
           $this->port = NULL;
         }
-        else
-        {
-          $this->port = $uri['port'];
-        }
-
         #Get around parse_url host bug when no scheme is present
         $uriStrTmp = $uriStr;
         #Adds a dummy scheme to dummy variable $uriStrTmp to retrieve the host correctly
         if(strpos($uriStrTmp,"://")===false && substr($uriStrTmp,0,1)!="/") $uriStrTmp = "http://".$uriStrTmp; #From http://stackoverflow.com/questions/10359347/php-parse-url-domain-retured-as-path-when-protocol-prefix-not-present
-        $uriTmp = parse_url(trim($uriStrTmp));
-
-
-        $this->host = $uriTmp['host'];
-
+        $this->host = strval(parse_url($uriStrTmp,PHP_URL_HOST));
+        $this->path =  strval(parse_url($uriStrTmp,PHP_URL_PATH));
 
         #Construction of authority
         if ($this->userInfo !== '')

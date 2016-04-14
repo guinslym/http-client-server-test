@@ -14,18 +14,29 @@
 
     use pillr\library\http\Message as Message;
     use pillr\library\http\Uri as Uri;
+    use pillr\library\http\Request as Request;
 
     $uri_string = "http://pillrcompany.com/interns/test?psr=true";
 
 
 
     $test = new Uri($uri_string);
+    $httpRequest =  new Request(
+        '1.1',
+        'GET',
+        new Uri($uri_string),
+        array('Accept' => 'application/json'),
+        ''
+    );
     echo $test->getScheme().' ';
     echo $test->getHost().' ';
     echo $test->getAuthority().' ';
     echo $test->getPath().' ';
     echo $test->getQuery().' ';
     echo $test->getFragment().' ';
+
+    echo $httpRequest->getRequestTarget().' ';
+    echo $httpRequest->getMethod().' ';
 
 
 

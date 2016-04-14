@@ -32,11 +32,15 @@ class Request extends Message implements RequestInterface
     public $protocolVersion = '1.1';
     public $httpMethod = 'GET';
     public $uri = NULL;
-    public $headers = array()
-    public $body = ''
+    public $headers = array();
+    public $body = '';
     public function __construct($protocolVersion, $httpMethod, $uri, $headers, $body)
     {
-
+        $this->protocolVersion = $protocolVersion;
+        $this->httpMethod = $httpMethod;
+        $this->uri = $uri;
+        $this->headers = $headers;
+        $this->body = $body;
     }
 
 
@@ -58,7 +62,7 @@ class Request extends Message implements RequestInterface
      */
     public function getRequestTarget()
     {
-
+        return $this->uri->uriString;
     }
 
     /**
@@ -80,7 +84,9 @@ class Request extends Message implements RequestInterface
      */
     public function withRequestTarget($requestTarget)
     {
-
+        $httpRequest = $this;
+        $httpRequest->uri = new Uri($requestTarget);
+        return $httpRequest;
     }
 
     /**
@@ -90,7 +96,7 @@ class Request extends Message implements RequestInterface
      */
     public function getMethod()
     {
-
+        return $this->httpMethod;
     }
 
     /**
@@ -124,7 +130,7 @@ class Request extends Message implements RequestInterface
      */
     public function getUri()
     {
-
+        return $this->uri;
     }
 
     /**
