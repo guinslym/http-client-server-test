@@ -33,8 +33,8 @@ class Response extends Message implements ResponseInterface
     public function __construct($protocolVersion, $statusCode, $statusPhrase, $headers, $body)
     {
         $this->protocolVersion = $protocolVersion;
-        $this->httpMethod = $httpMethod;
-        $this->uri = $uri;
+        $this->statusCode = $statusCode;
+        $this->statusPhrase = $statusPhrase;
         $this->headers = $headers;
         $this->body = $body;
       }
@@ -75,7 +75,10 @@ class Response extends Message implements ResponseInterface
      */
     public function withStatus($code, $reasonPhrase = '')
     {
-
+        $output = $this;
+        $output->statusCode = $code;
+        $output->statusPhrase = $reasonPhrase;
+        return $output;
     }
 
     /**
