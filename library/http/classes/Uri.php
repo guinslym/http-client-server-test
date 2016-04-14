@@ -24,7 +24,6 @@ use \Psr\Http\Message\UriInterface as UriInterface;
  */
 class Uri implements UriInterface
 {
-    public $uriString = '';
     public $scheme = '';
     public $authority = '';
     public $userInfo='';
@@ -36,26 +35,38 @@ class Uri implements UriInterface
 
     public function __construct($uriStr)
     {
-        $this->uriString = $uriStr;
-        $this->scheme = strtolower(strval(parse_url($uriStr,PHP_URL_SCHEME))); #if scheme is NULL, strval(NULL) is an empty string
-        $this->userInfo =  strval(parse_url($uriStr,PHP_URL_USER));
-        $this->host = strval(parse_url($uriStr,PHP_URL_HOST));
-        $this->port =  parse_url($uriStr,PHP_URL_PORT);
+        $tmp = $this; # tmp is necessary because php doesn't allow to reassign $this directly
 
-        $this->query =  strval(parse_url($uriStr,PHP_URL_QUERY));
-        $this->fragment = strval(parse_url($uriStr,PHP_URL_FRAGMENT));
+        $scheme = strtolower(strval(parse_url($uriStr,PHP_URL_SCHEME))); #if scheme is NULL, strval(NULL) is an empty string
+        $tmp = $tmp->withScheme($scheme);
+        $user =  strval(parse_url($uriStr,PHP_URL_USER));
+        $pass =  strval(parse_url($uriStr,PHP_URL_PASS));
+        $tmp = $tmp->withUserInfo($user,$pass);
+        $port =  parse_url($uriStr,PHP_URL_PORT);
+        $tmp = $tmp->withPort($port);
 
-        #Sets port according to constraints
-        if ($this->port == getservbyname($this->scheme, 'tcp')) #If port is the default port
-        {
-          $this->port = NULL;
-        }
+        $query =  strval(parse_url($uriStr,PHP_URL_QUERY));
+        $tmp=$tmp->withQuery($query);
+        $fragment = strval(parse_url($uriStr,PHP_URL_FRAGMENT));
+        $tmp=$tmp->withFragment($fragment);
+
         #Get around parse_url host bug when no scheme is present
         $uriStrTmp = $uriStr;
         #Adds a dummy scheme to dummy variable $uriStrTmp to retrieve the host correctly
         if(strpos($uriStrTmp,"://")===false && substr($uriStrTmp,0,1)!="/") $uriStrTmp = "http://".$uriStrTmp; #From http://stackoverflow.com/questions/10359347/php-parse-url-domain-retured-as-path-when-protocol-prefix-not-present
-        $this->host = strval(parse_url($uriStrTmp,PHP_URL_HOST));
-        $this->path =  strval(parse_url($uriStrTmp,PHP_URL_PATH));
+        $host = strval(parse_url($uriStrTmp,PHP_URL_HOST));
+        $path =  strval(parse_url($uriStrTmp,PHP_URL_PATH));
+        $tmp = $tmp->withHost($host);
+        $tmp = $tmp->withPath($path);
+
+        $this->scheme = $tmp->scheme;
+        $this->userInfo = $tmp->userInfo;
+        $this->host = $tmp->host;
+        $this->port = $tmp->port;
+        $this->path = $tmp->path;
+        $this->query = $tmp->query;
+        $this->fragment = $tmp->fragment;
+
 
         #Construction of authority
         if ($this->userInfo !== '')
@@ -207,7 +218,7 @@ class Uri implements UriInterface
      */
     public function getPath()
     {
-        return $this->path;
+        return urldecode($this->path);
     }
 
     /**
@@ -232,7 +243,7 @@ class Uri implements UriInterface
      */
     public function getQuery()
     {
-        return $this->query;
+        return urldecode($this->query);
     }
 
     /**
@@ -253,7 +264,7 @@ class Uri implements UriInterface
      */
     public function getFragment()
     {
-        return $this->fragment;
+        return urldecode($this->fragment);
     }
 
     /**
@@ -274,7 +285,10 @@ class Uri implements UriInterface
      */
     public function withScheme($scheme)
     {
-
+        #Need to compare to list of valid schemes
+        $output = $this;
+        $output->scheme = $scheme;
+        return $output;
     }
 
     /**
@@ -293,7 +307,10 @@ class Uri implements UriInterface
      */
     public function withUserInfo($user, $password = null)
     {
-
+      $output = $this;
+      $output->userInfo = $user;
+      if ($password) {$output->userInfo.=':'.$password;} #Append ':password' id password is not null.
+      return $output;
     }
 
     /**
@@ -310,6 +327,11 @@ class Uri implements UriInterface
      */
     public function withHost($host)
     {
+        #Need  to find regex to test validity
+        $output = $this;
+        $output->host = $host;
+        return $output;
+
 
     }
 
@@ -332,7 +354,22 @@ class Uri implements UriInterface
      */
     public function withPort($port)
     {
+      $output = $this;
 
+      if ($port == getservbyname($this->scheme, 'tcp') || $port == NULL) #If port is the default port
+      {
+        $output->port = NULL;
+      }
+      elseif(!(is_int($port) && $port>=0 && $port<=65535))
+      {
+        throw new \InvalidArgumentException('Port is not valid');
+      }
+      else
+      {
+        $output->port = $port;
+      }
+
+      return $output;
     }
 
     /**
@@ -359,7 +396,17 @@ class Uri implements UriInterface
      */
     public function withPath($path)
     {
+      $output = $this;
 
+      if (!preg_match('/^[^*?"<>|:]*$/',$path)){throw new \InvalidArgumentException('Path is not valid.');}
+      else
+      {
+        if($path[0] = '/'){$path = '/'.trim($path,'/');} #if path is not rootless, trim all beginning and ending slashes then add first slash.
+        else {$path = trim($path,'/');} #else just trim all beginning and ending slashes
+        $output->path = urlencode(urldecode($path)); //We decode then encode again to be sure not to encode characters twice
+      }
+
+      return $output;
     }
 
     /**
@@ -379,7 +426,16 @@ class Uri implements UriInterface
      */
     public function withQuery($query)
     {
+      #Robustness to be added
+      $output = $this;
 
+      if (!preg_match('^([\w-]+(=[\w-]*)?(&[\w-]+(=[\w-]*)?)*)?$^',$query)){throw new \InvalidArgumentException('Query is not valid.');}
+      else
+      {
+        $output->query = urlencode(urldecode($query)); //We decode then encode again to be sure not to encode characters twice
+      }
+
+      return $output;
     }
 
     /**
@@ -398,7 +454,10 @@ class Uri implements UriInterface
      */
     public function withFragment($fragment)
     {
-
+      #Robustness to be added
+      $output = $this;
+      $output->fragment = urlencode(urldecode($fragment));
+      return $output;
     }
 
     /**
@@ -426,6 +485,23 @@ class Uri implements UriInterface
      */
     public function __toString()
     {
+      if($this->getScheme()==''){$scheme='';}
+      else {$scheme = $this->getScheme().':';}
+
+      if($this->getAuthority()==''){$authority='';}
+      else{$authority = '//'.$this->getAuthority();}
+
+      if($this->getPath()==''){$path='';}
+      elseif(!($this->getAuthority()=='') && $this->getPath()[0]!=='/'){$path='/'.$this->getPath();}
+      else{$path=$this->getPath();}
+
+      if($this->getQuery()==''){$query='';}
+      else{$query = '?'.$this->getQuery();}
+
+      if($this->getFragment()==''){$fragment='';}
+      else{$fragment = '#'.$this->getFragment();}
+
+      return $scheme.$authority.$path.$query.$fragment;
 
     }
 

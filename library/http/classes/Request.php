@@ -62,7 +62,7 @@ class Request extends Message implements RequestInterface
      */
     public function getRequestTarget()
     {
-        return $this->uri->uriString;
+        return $this->uri->__toString();
     }
 
     /**
