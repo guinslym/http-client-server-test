@@ -12,6 +12,8 @@ use \Psr\Http\Message\StreamInterface as StreamInterface;
  */
 class Stream implements StreamInterface
 {
+
+    public $lines = array();
     /**
      * Reads all data from the stream into a string, from the beginning to end.
      *
@@ -28,7 +30,13 @@ class Stream implements StreamInterface
      */
     public function __toString()
     {
+        $outputString='';
+        foreach($this->lines as $line)
+        {
+            $outputString .= ($line.PHP_EOL);
+        }
 
+        return $outputString;
     }
 
     /**
@@ -145,7 +153,7 @@ class Stream implements StreamInterface
      */
     public function write($string)
     {
-
+        $this->lines = array_merge($this->lines,array($string));
     }
 
     /**
@@ -199,6 +207,6 @@ class Stream implements StreamInterface
      */
     public function getMetadata($key = null)
     {
-        
+
     }
 }

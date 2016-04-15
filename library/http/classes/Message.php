@@ -18,7 +18,7 @@ use Psr\Http\Message\StreamInterface as StreamInterface;
  */
 class Message implements MessageInterface
 {
-    
+
     /**
      * Retrieves the HTTP protocol version as a string.
      *
@@ -28,7 +28,7 @@ class Message implements MessageInterface
      */
     public function getProtocolVersion()
     {
-
+        return $this->protocolVersion;
     }
 
     /**
@@ -46,7 +46,9 @@ class Message implements MessageInterface
      */
     public function withProtocolVersion($version)
     {
-
+        $output = $this;
+        $output->protocolVersion = $version;
+        return $output;
     }
 
     /**
@@ -76,7 +78,7 @@ class Message implements MessageInterface
      */
     public function getHeaders()
     {
-
+        return $this->headers;
     }
 
     /**
@@ -174,7 +176,12 @@ class Message implements MessageInterface
      */
     public function withAddedHeader($name, $value)
     {
-
+        $output = $this;
+        $initialHeaders = $this->getHeaders();
+        $newHeader = array($name=>$value);
+        $finalHeaders = array_merge($initialHeaders,$newHeader);
+        $output->headers = $finalHeaders;
+        return $output;
     }
 
     /**
@@ -201,7 +208,7 @@ class Message implements MessageInterface
      */
     public function getBody()
     {
-
+        return $this->body;
     }
 
     /**
@@ -219,6 +226,8 @@ class Message implements MessageInterface
      */
     public function withBody(StreamInterface $body)
     {
-
+        $output=$this;
+        $output->body = $body;
+        return $output;
     }
 }

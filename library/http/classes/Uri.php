@@ -33,7 +33,7 @@ class Uri implements UriInterface
     public $query='';
     public $fragment='';
 
-    public function __construct($uriStr)
+    public function __construct($uriStr = '')
     {
         $tmp = $this; # tmp is necessary because php doesn't allow to reassign $this directly
 
@@ -401,9 +401,17 @@ class Uri implements UriInterface
       if (!preg_match('/^[^*?"<>|:]*$/',$path)){throw new \InvalidArgumentException('Path is not valid.');}
       else
       {
-        if($path[0] = '/'){$path = '/'.trim($path,'/');} #if path is not rootless, trim all beginning and ending slashes then add first slash.
-        else {$path = trim($path,'/');} #else just trim all beginning and ending slashes
-        $output->path = urlencode(urldecode($path)); //We decode then encode again to be sure not to encode characters twice
+        if($path)
+        {
+          if($path[0] = '/'){$path = '/'.trim($path,'/');} #if path is not rootless, trim all beginning and ending slashes then add first slash.
+          else {$path = trim($path,'/');} #else just trim all beginning and ending slashes
+          $output->path = urlencode(urldecode($path)); //We decode then encode again to be sure not to encode characters twice
+        }
+        else
+        {
+          $output->path = '';
+        }
+
       }
 
       return $output;

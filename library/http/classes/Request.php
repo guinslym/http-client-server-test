@@ -31,18 +31,30 @@ class Request extends Message implements RequestInterface
 
     public $protocolVersion = '1.1';
     public $httpMethod = 'GET';
-    public $uri = NULL;
+    public $uri;
     public $headers = array();
-    public $body = '';
-    public function __construct($protocolVersion, $httpMethod, $uri, $headers, $body)
+    public $body;
+    public function __construct($protocolVersion='1.1', $httpMethod='GET', $uri=NULL, $headers=array(), $body=NULL)
     {
+        if ($uri === NULL)
+        {
+          $uri = new Uri;
+        }
+
+        if ($body === NULL)
+        {
+          $body = new Stream;
+        }
+
+
+
         $tmp = $this;
 
-
+        $tmp = $tmp->withProtocolVersion($protocolVersion);
         $tmp = $tmp->withMethod($httpMethod); #Using the setter methods to ensure values passed are valid.
         $tmp = $tmp->withUri($uri);
 
-        $this->protocolVersion = $protocolVersion;
+        $this->protocolVersion = $tmp->protocolVersion;
         $this->httpMethod=$tmp->httpMethod;
         $this->uri = $tmp->uri;
         $this->headers = $headers;
@@ -182,24 +194,26 @@ class Request extends Message implements RequestInterface
     public function withUri(UriInterface $uri, $preserveHost = false)
     {
         $output=$this;
-        if(!$preserveHost)
+        if ($this->uri) #Only if the uri has already been set for this object do we need to care about host preservation
         {
-            if($uri->getHost()=='')
-            {
-                $uri=$uri->withHost($this->uri->getHost());
-            }
-            $output->uri = $uri;
+          if(!$preserveHost)
+          {
+              if($uri->getHost()=='')
+              {
+                  $uri=$uri->withHost($this->uri->getHost());
+              }
+          }
+
+          else
+          {
+              if($this->uri->getHost()!=='')
+              {
+                  $uri=$uri->withHost($this->uri->getHost());
+              }
+          }
         }
 
-        else
-        {
-            if($this->uri->getHost()!=='')
-            {
-                $uri=$uri->withHost($this->uri->getHost());
-            }
-            $output->uri = $uri;
-        }
-
+        $output->uri = $uri;
         return $output;
     }
 

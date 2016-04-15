@@ -26,17 +26,27 @@ class Response extends Message implements ResponseInterface
 
 
     public $protocolVersion = '1.1';
-    public $statusCode = '200';
-    public $statusPhrase = 'OK';
+    public $statusCode = 200;
+    public $reasonPhrase = 'OK';
     public $headers = array();
-    public $body = '';
-    public function __construct($protocolVersion, $statusCode, $statusPhrase, $headers, $body)
+    public $body ;
+    public function __construct($protocolVersion='1.1', $statusCode=200, $reasonPhrase='OK', $headers=array(), $body=NULL)
     {
-        $this->protocolVersion = $protocolVersion;
-        $this->statusCode = $statusCode;
-        $this->statusPhrase = $statusPhrase;
-        $this->headers = $headers;
-        $this->body = $body;
+        if ($body==NULL)
+        {
+            $body = new Stream;
+        }
+
+        $tmp = $this;
+
+        $tmp = $tmp->withStatus($statusCode,$reasonPhrase);
+        $tmp=$tmp->withProtocolVersion($protocolVersion);
+        foreach($headers as $name => $value)
+        {
+            $tmp=$tmp->withAddedHeader($name,$value);
+        }
+
+        $tmp= $tmp->withBody=$body;
       }
 
 
@@ -77,7 +87,7 @@ class Response extends Message implements ResponseInterface
     {
         $output = $this;
         $output->statusCode = $code;
-        $output->statusPhrase = $reasonPhrase;
+        $output->reasonPhrase = $reasonPhrase;
         return $output;
     }
 
@@ -96,6 +106,6 @@ class Response extends Message implements ResponseInterface
      */
     public function getReasonPhrase()
     {
-
+        return $this->reasonPhrase;
     }
 }
