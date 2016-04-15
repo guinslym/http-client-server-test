@@ -46,7 +46,7 @@ class Response extends Message implements ResponseInterface
             $tmp=$tmp->withAddedHeader($name,$value);
         }
 
-        $tmp= $tmp->withBody=$body;
+        $tmp = $tmp->withBody($body);
       }
 
 

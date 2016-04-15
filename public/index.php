@@ -43,7 +43,7 @@
       $_SERVER['REQUEST_METHOD'],
       new Uri($_SERVER['REQUEST_URI']),
       getallheaders(),
-      file_get_contents('php://input')
+      new Stream(file_get_contents('php://input'))
     );
 
     #Response creation

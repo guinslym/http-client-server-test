@@ -38,17 +38,11 @@ class Uri implements UriInterface
         $tmp = $this; # tmp is necessary because php doesn't allow to reassign $this directly
 
         $scheme = strtolower(strval(parse_url($uriStr,PHP_URL_SCHEME))); #if scheme is NULL, strval(NULL) is an empty string
-        $tmp = $tmp->withScheme($scheme);
         $user =  strval(parse_url($uriStr,PHP_URL_USER));
         $pass =  strval(parse_url($uriStr,PHP_URL_PASS));
-        $tmp = $tmp->withUserInfo($user,$pass);
         $port =  parse_url($uriStr,PHP_URL_PORT);
-        $tmp = $tmp->withPort($port);
-
         $query =  strval(parse_url($uriStr,PHP_URL_QUERY));
-        $tmp=$tmp->withQuery($query);
         $fragment = strval(parse_url($uriStr,PHP_URL_FRAGMENT));
-        $tmp=$tmp->withFragment($fragment);
 
         #Get around parse_url host bug when no scheme is present
         $uriStrTmp = $uriStr;
@@ -56,9 +50,17 @@ class Uri implements UriInterface
         if(strpos($uriStrTmp,"://")===false && substr($uriStrTmp,0,1)!="/") $uriStrTmp = "http://".$uriStrTmp; #From http://stackoverflow.com/questions/10359347/php-parse-url-domain-retured-as-path-when-protocol-prefix-not-present
         $host = strval(parse_url($uriStrTmp,PHP_URL_HOST));
         $path =  strval(parse_url($uriStrTmp,PHP_URL_PATH));
+
+        #Sets tmp object with setters to assure validity of passed arguments
+        $tmp = $tmp->withScheme($scheme);
+        $tmp = $tmp->withUserInfo($user,$pass);
+        $tmp = $tmp->withPort($port);
+        $tmp = $tmp->withQuery($query);
+        $tmp = $tmp->withFragment($fragment);
         $tmp = $tmp->withHost($host);
         $tmp = $tmp->withPath($path);
 
+        #Finally, sets elements of $this through $tmp. Surely there must be a better way to do this...
         $this->scheme = $tmp->scheme;
         $this->userInfo = $tmp->userInfo;
         $this->host = $tmp->host;
@@ -286,9 +288,17 @@ class Uri implements UriInterface
     public function withScheme($scheme)
     {
         #Need to compare to list of valid schemes
-        $output = $this;
-        $output->scheme = $scheme;
-        return $output;
+        if(!is_string($scheme) && !is_null($scheme))
+        {
+            throw new \InvalidArgumentException('Scheme not valid.');
+        }
+        else
+        {
+            $output = $this;
+            $output->scheme = $scheme;
+            return $output;
+        }
+
     }
 
     /**
@@ -307,10 +317,18 @@ class Uri implements UriInterface
      */
     public function withUserInfo($user, $password = null)
     {
-      $output = $this;
-      $output->userInfo = $user;
-      if ($password) {$output->userInfo.=':'.$password;} #Append ':password' id password is not null.
-      return $output;
+      if((!is_string($user) && !is_null($user)) || (!is_string($password) && !is_null($password)))
+      {
+          throw new \InvalidArgumentException('User information not valid.');
+      }
+      else
+      {
+        $output = $this;
+        $output->userInfo = $user;
+        if ($password) {$output->userInfo.=':'.$password;} #Append ':password' if password is not null.
+        return $output;
+      }
+
     }
 
     /**
@@ -328,6 +346,11 @@ class Uri implements UriInterface
     public function withHost($host)
     {
         #Need  to find regex to test validity
+        if(!is_string($host) && !is_null($host))
+        {
+            throw new \InvalidArgumentException('Host not valid.');
+        }
+
         $output = $this;
         $output->host = $host;
         return $output;
@@ -463,6 +486,11 @@ class Uri implements UriInterface
     public function withFragment($fragment)
     {
       #Robustness to be added
+      #Need  to find regex to test validity
+      if(!is_string($fragment) && !is_null($fragment))
+      {
+          throw new \InvalidArgumentException('Host not valid.');
+      }
       $output = $this;
       $output->fragment = urlencode(urldecode($fragment));
       return $output;
@@ -493,23 +521,23 @@ class Uri implements UriInterface
      */
     public function __toString()
     {
-      if($this->getScheme()==''){$scheme='';}
-      else {$scheme = $this->getScheme().':';}
+        if($this->getScheme()==''){$scheme='';}
+        else {$scheme = $this->getScheme().':';}
 
-      if($this->getAuthority()==''){$authority='';}
-      else{$authority = '//'.$this->getAuthority();}
+        if($this->getAuthority()==''){$authority='';}
+        else{$authority = '//'.$this->getAuthority();}
 
-      if($this->getPath()==''){$path='';}
-      elseif(!($this->getAuthority()=='') && $this->getPath()[0]!=='/'){$path='/'.$this->getPath();}
-      else{$path=$this->getPath();}
+        if($this->getPath()==''){$path='';}
+        elseif(!($this->getAuthority()=='') && $this->getPath()[0]!=='/'){$path='/'.$this->getPath();}
+        else{$path=$this->getPath();}
 
-      if($this->getQuery()==''){$query='';}
-      else{$query = '?'.$this->getQuery();}
+        if($this->getQuery()==''){$query='';}
+        else{$query = '?'.$this->getQuery();}
 
-      if($this->getFragment()==''){$fragment='';}
-      else{$fragment = '#'.$this->getFragment();}
+        if($this->getFragment()==''){$fragment='';}
+        else{$fragment = '#'.$this->getFragment();}
 
-      return $scheme.$authority.$path.$query.$fragment;
+        return $scheme.$authority.$path.$query.$fragment;
 
     }
 

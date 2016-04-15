@@ -53,12 +53,19 @@ class Request extends Message implements RequestInterface
         $tmp = $tmp->withProtocolVersion($protocolVersion);
         $tmp = $tmp->withMethod($httpMethod); #Using the setter methods to ensure values passed are valid.
         $tmp = $tmp->withUri($uri);
+        foreach($headers as $name => $value)
+        {
+            $tmp=$tmp->withAddedHeader($name,$value);
+        }
+
+        $tmp = $tmp->withBody($body);
 
         $this->protocolVersion = $tmp->protocolVersion;
         $this->httpMethod=$tmp->httpMethod;
         $this->uri = $tmp->uri;
-        $this->headers = $headers;
-        $this->body = $body;
+        $this->headers = $tmp->headers;
+        $this->body = $tmp->body;
+
     }
 
 
