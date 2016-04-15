@@ -47,8 +47,24 @@ class Message implements MessageInterface
     public function withProtocolVersion($version)
     {
         $output = $this;
-        $output->protocolVersion = $version;
-        return $output;
+        if ($version == 'HTTP/1.0' || $version == 'HTTP/1.1')
+        {
+          sscanf($version,'HTTP/%s',$version2);
+          $output->protocolVersion = (string)$version2;
+          return $output;
+        }
+        elseif ($version == '1.0' || $version == '1.1')
+        {
+          $output = $this;
+          $output->protocolVersion = (string)$version;
+          return $output;
+        }
+        else
+        {
+          throw new \InvalidArgumentException('HTTP protocol must be 1.0 or 1.1');
+        }
+
+
     }
 
     /**
@@ -176,12 +192,23 @@ class Message implements MessageInterface
      */
     public function withAddedHeader($name, $value)
     {
-        $output = $this;
-        $initialHeaders = $this->getHeaders();
-        $newHeader = array($name=>$value);
-        $finalHeaders = array_merge($initialHeaders,$newHeader);
-        $output->headers = $finalHeaders;
-        return $output;
+        if(!is_string($name))
+        {
+          throw new \InvalidArgumentException('Name must be string');
+        }
+        elseif(!is_string($value) && (!is_string(strval($value)))) #If value is not string and can't be cast to string
+        {
+          throw new \InvalidArgumentException('Value must be string');
+        }
+        else
+        {
+          $output = $this;
+          $initialHeaders = $this->getHeaders();
+          $newHeader = array($name=>strval($value));
+          $finalHeaders = array_merge($initialHeaders,$newHeader);
+          $output->headers = $finalHeaders;
+          return $output;
+        }
     }
 
     /**
@@ -226,8 +253,17 @@ class Message implements MessageInterface
      */
     public function withBody(StreamInterface $body)
     {
-        $output=$this;
-        $output->body = $body;
-        return $output;
+        if(is_a($body,'pillr\library\http\Stream'))
+        {
+          $output=$this;
+          $output->body = $body;
+          return $output;
+        }
+
+        else
+        {
+          throw new \InvalidArgumentException('Body is not a stream of data!');
+        }
+
     }
 }
