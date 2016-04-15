@@ -46,6 +46,13 @@ class Request extends Message implements RequestInterface
           $body = new Stream;
         }
 
+        if (is_string($body))
+        {
+          $bodyTmp = new Stream;
+          $bodyTmp->write($body);
+          $body = $bodyTmp;
+        }
+
 
 
         $tmp = $this;

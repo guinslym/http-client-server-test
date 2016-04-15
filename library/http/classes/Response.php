@@ -37,6 +37,13 @@ class Response extends Message implements ResponseInterface
             $body = new Stream;
         }
 
+        if (is_string($body))
+        {
+          $bodyTmp = new Stream;
+          $bodyTmp->write($body);
+          $body = $bodyTmp;
+        }
+
         $tmp = $this;
 
         $tmp = $tmp->withStatus($statusCode,$reasonPhrase);
